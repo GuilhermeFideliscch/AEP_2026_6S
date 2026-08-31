@@ -1,4 +1,4 @@
-# Plataforma de Compartilhamento de Materiais Acadêmicos
+#Rede saber (plataforma de compartilhamento de materiais acadêmicos)
 
 Projeto desenvolvido para a Atividade de Estudo Programada (AEP) de Engenharia de Software, focado na ODS 4 (Educação de Qualidade). O sistema permite o cadastro, consulta e controle de materiais de estudo entre estudantes.
 
