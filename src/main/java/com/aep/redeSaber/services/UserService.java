@@ -28,4 +28,19 @@ public class UserService {
     public Optional<User> listarPorId(Integer id){
         return userRepository.findById(id);
     }
+
+    public User atualizar(User user, Integer id){
+        User userExistente = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User não encontrado"));
+
+        userExistente.setNome(user.getNome());
+        userExistente.setEmail(user.getEmail());
+        userExistente.setTelefone(user.getTelefone());
+        userExistente.setSenha(user.getSenha());
+
+        return userRepository.save(userExistente);
+    }
+
+    public void deletar(Integer id){
+        userRepository.deleteById(id);
+    }
 }

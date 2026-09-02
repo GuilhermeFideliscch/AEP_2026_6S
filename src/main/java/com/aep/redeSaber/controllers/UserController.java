@@ -35,4 +35,23 @@ public class UserController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<User> update(@PathVariable Integer id, @RequestBody User user){
+        if(userService.listarPorId(id).isEmpty()){
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(userService.atualizar(user, id));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<User> delete(@PathVariable Integer id){
+        if(userService.listarPorId(id).isEmpty()) {
+            return ResponseEntity.notFound().build();
+            }
+
+        userService.deletar(id);
+
+        return ResponseEntity.noContent().build();
+    }
 }
