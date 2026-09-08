@@ -1,5 +1,6 @@
 package com.aep.redeSaber.services;
 
+import com.aep.redeSaber.exceptions.ResourceNotFoundException;
 import com.aep.redeSaber.models.User;
 import com.aep.redeSaber.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +33,8 @@ public class UserService {
     }
 
     public User atualizar(User user, String id){
-        User userExistente = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User não encontrado"));
+        User userExistente = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User não encontrado"));
 
         userExistente.setNome(user.getNome());
         userExistente.setEmail(user.getEmail());
