@@ -56,12 +56,12 @@ class UserServiceTest {
     @Test
     void deveListarUsuarioPorIdQuandoExiste() {
         User user = new User();
-        user.setId(1);
+        user.setId("1");
         user.setNome("Carla");
 
-        when(userRepository.findById(1)).thenReturn(Optional.of(user));
+        when(userRepository.findById("1")).thenReturn(Optional.of(user));
 
-        Optional<User> resultado = userService.listarPorId(1);
+        Optional<User> resultado = userService.listarPorId("1");
 
         assertThat(resultado).isPresent();
         assertThat(resultado.get().getNome()).isEqualTo("Carla");
@@ -69,9 +69,9 @@ class UserServiceTest {
 
     @Test
     void deveRetornarVazioQuandoUsuarioNaoExiste() {
-        when(userRepository.findById(99)).thenReturn(Optional.empty());
+        when(userRepository.findById("99")).thenReturn(Optional.empty());
 
-        Optional<User> resultado = userService.listarPorId(99);
+        Optional<User> resultado = userService.listarPorId("99");
 
         assertThat(resultado).isEmpty();
     }
@@ -79,7 +79,7 @@ class UserServiceTest {
     @Test
     void deveAtualizarUsuarioComSucesso() {
         User existente = new User();
-        existente.setId(1);
+        existente.setId("1");
         existente.setNome("Antigo");
 
         User dadosAtualizados = new User();
@@ -88,35 +88,35 @@ class UserServiceTest {
         dadosAtualizados.setTelefone("123456789");
         dadosAtualizados.setSenha("123456");
 
-        when(userRepository.findById(1)).thenReturn(Optional.of(existente));
+        when(userRepository.findById("1")).thenReturn(Optional.of(existente));
         when(userRepository.save(any(User.class))).thenReturn(existente);
 
-        User resultado = userService.atualizar(dadosAtualizados, 1);
+        User resultado = userService.atualizar(dadosAtualizados, "1");
 
         assertThat(resultado.getNome()).isEqualTo("Novo Nome");
-        verify(userRepository).findById(1);
+        verify(userRepository).findById("1");
         verify(userRepository).save(existente);
     }
 
     @Test
     void deveLancarExcecaoAoAtualizarUsuarioInexistente() {
-        when(userRepository.findById(99)).thenReturn(Optional.empty());
+        when(userRepository.findById("99")).thenReturn(Optional.empty());
 
         RuntimeException excecao = assertThrows(RuntimeException.class, () -> {
-            userService.atualizar(new User(), 99);
+            userService.atualizar(new User(), "99");
         });
 
         assertThat(excecao.getMessage()).isEqualTo("User não encontrado");
-        verify(userRepository).findById(99);
+        verify(userRepository).findById("99");
         verify(userRepository, never()).save(any(User.class));
     }
 
     @Test
     void deveDeletarUsuario() {
-        doNothing().when(userRepository).deleteById(1);
+        doNothing().when(userRepository).deleteById("1");
 
-        userService.deletar(1);
+        userService.deletar("1");
 
-        verify(userRepository).deleteById(1);
+        verify(userRepository).deleteById("1");
     }
 }
