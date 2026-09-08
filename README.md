@@ -1,4 +1,4 @@
-#Rede Saber
+##Rede Saber
 Plataforma de compartilhamento de materiais acadêmicos
 
 ---
@@ -238,6 +238,7 @@ AEP_2026_6S/
 │   │   │               ├── repositories/
 │   │   │               ├── services/
 │   │   │               └── RedeSaberApplication.java
+│   │   │               ├── security/
 │   │   │
 │   │   └── resources/
 │   │       ├── db/
