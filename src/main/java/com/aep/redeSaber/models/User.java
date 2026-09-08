@@ -11,7 +11,7 @@ import java.util.Date;
 public class User {
 
     @Id
-    private Integer id;
+    private String id;
 
     private String nome;
     private String email;
@@ -19,5 +19,5 @@ public class User {
     private String telefone;
     private boolean ativo;
     private Date dataCriacao;
-    
+
 }

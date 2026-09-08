@@ -41,7 +41,7 @@ class UserControllerTest {
         entrada.setEmail("maria@teste.com");
 
         User salvo = new User();
-        salvo.setId(1);
+        salvo.setId("1");
         salvo.setNome("Maria");
         salvo.setEmail("maria@teste.com");
 
@@ -52,7 +52,7 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(entrada)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.id").value("1"))
                 .andExpect(jsonPath("$.nome").value("Maria"));
     }
 
@@ -60,7 +60,7 @@ class UserControllerTest {
     @WithMockUser
     void deveListarTodosUsuarios() throws Exception {
         User user = new User();
-        user.setId(1);
+        user.setId("1");
         user.setNome("Ana");
 
         when(userService.listar()).thenReturn(List.of(user));
@@ -84,12 +84,12 @@ class UserControllerTest {
     @WithMockUser
     void deveBuscarUsuarioPorIdQuandoExiste() throws Exception {
         User user = new User();
-        user.setId(1);
+        user.setId("1");
         user.setNome("Bruno");
 
-        when(userService.listarPorId(1)).thenReturn(Optional.of(user));
+        when(userService.listarPorId("1")).thenReturn(Optional.of(user));
 
-        mockMvc.perform(get("/users/{id}", 1))
+        mockMvc.perform(get("/users/{id}", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.nome").value("Bruno"));
     }
@@ -97,16 +97,16 @@ class UserControllerTest {
     @Test
     @WithMockUser
     void deveRetornar404QuandoUsuarioNaoExiste() throws Exception {
-        when(userService.listarPorId(99)).thenReturn(Optional.empty());
+        when(userService.listarPorId("99")).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/users/{id}", 99))
+        mockMvc.perform(get("/users/{id}", "99"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     @WithMockUser
     void deveAtualizarUsuarioComSucesso() throws Exception {
-        Integer userId = 1;
+        String userId = "1";
         User entrada = new User();
         entrada.setNome("Nome Atualizado");
         entrada.setEmail("atualizado@teste.com");
@@ -131,7 +131,7 @@ class UserControllerTest {
     @Test
     @WithMockUser
     void deveRetornar404AoAtualizarUsuarioInexistente() throws Exception {
-        Integer userId = 99;
+        String userId = "99";
         User entrada = new User();
         entrada.setNome("Teste");
 
@@ -147,7 +147,7 @@ class UserControllerTest {
     @Test
     @WithMockUser
     void deveDeletarUsuarioComSucesso() throws Exception {
-        Integer userId = 1;
+        String userId = "1";
 
         when(userService.listarPorId(userId)).thenReturn(Optional.of(new User()));
         doNothing().when(userService).deletar(userId);
@@ -160,7 +160,7 @@ class UserControllerTest {
     @Test
     @WithMockUser
     void deveRetornar404AoDeletarUsuarioInexistente() throws Exception {
-        Integer userId = 99;
+        String userId = "99";
 
         when(userService.listarPorId(userId)).thenReturn(Optional.empty());
 

@@ -5,6 +5,7 @@ import com.aep.redeSaber.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,6 +19,7 @@ public class UserService {
     }
 
     public User criar(User user){
+        user.setDataCriacao(new Date());
         return userRepository.save(user);
     }
 
@@ -25,11 +27,11 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    public Optional<User> listarPorId(Integer id){
+    public Optional<User> listarPorId(String id){
         return userRepository.findById(id);
     }
 
-    public User atualizar(User user, Integer id){
+    public User atualizar(User user, String id){
         User userExistente = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User não encontrado"));
 
         userExistente.setNome(user.getNome());
@@ -40,7 +42,7 @@ public class UserService {
         return userRepository.save(userExistente);
     }
 
-    public void deletar(Integer id){
+    public void deletar(String id){
         userRepository.deleteById(id);
     }
 }

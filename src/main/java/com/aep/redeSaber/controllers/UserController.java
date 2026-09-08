@@ -30,14 +30,14 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> findById(@PathVariable Integer id){
+    public ResponseEntity<User> findById(@PathVariable String id){
         return userService.listarPorId(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<User> update(@PathVariable Integer id, @RequestBody User user){
+    public ResponseEntity<User> update(@PathVariable String id, @RequestBody User user){
         if(userService.listarPorId(id).isEmpty()){
             return ResponseEntity.notFound().build();
         }
@@ -45,10 +45,10 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<User> delete(@PathVariable Integer id){
+    public ResponseEntity<User> delete(@PathVariable String id){
         if(userService.listarPorId(id).isEmpty()) {
             return ResponseEntity.notFound().build();
-            }
+        }
 
         userService.deletar(id);
 
