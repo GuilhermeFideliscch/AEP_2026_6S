@@ -105,6 +105,11 @@ git checkout desenvolvimento
 
 ## Windows
 
+Abra o docker e digite no terminal da pasta:
+```bash
+docker-compose up -d
+```
+
 No Windows, utilize o Maven Wrapper:
 
 ```bash
