@@ -1,8 +1,8 @@
+
 package com.aep.redeSaber.controllers;
 
 import com.aep.redeSaber.models.Material;
 import com.aep.redeSaber.services.MaterialService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -27,9 +27,6 @@ class MaterialControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @MockitoBean
     private MaterialService materialService;
@@ -113,9 +110,6 @@ class MaterialControllerTest {
 
     @Test
     void deveAtualizarMaterial() throws Exception {
-        Material entrada = new Material();
-        entrada.setTitulo("Título atualizado");
-
         Material atualizado = new Material();
         atualizado.setId("material-1");
         atualizado.setTitulo("Título atualizado");
@@ -125,7 +119,7 @@ class MaterialControllerTest {
 
         mockMvc.perform(put("/materiais/material-1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(entrada)))
+                        .content("{\"titulo\":\"Título atualizado\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.titulo").value("Título atualizado"))
                 .andExpect(jsonPath("$.usuarioId").value("usuario-original"));

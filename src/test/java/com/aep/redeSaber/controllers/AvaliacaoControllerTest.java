@@ -3,11 +3,10 @@ package com.aep.redeSaber.controllers;
 
 import com.aep.redeSaber.models.Avaliacao;
 import com.aep.redeSaber.services.AvaliacaoService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockitoBean;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -31,9 +30,6 @@ class AvaliacaoControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
     @MockitoBean
     private AvaliacaoService avaliacaoService;
 
@@ -51,7 +47,7 @@ class AvaliacaoControllerTest {
                         .with(csrf())
                         .sessionAttr("usuarioId", "user1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(avaliacao)))
+                        .content("{\"nota\":5,\"materialId\":\"mat1\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value("1"))
                 .andExpect(jsonPath("$.nota").value(5));
@@ -69,7 +65,7 @@ class AvaliacaoControllerTest {
                         .with(user("usuario"))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(avaliacao)))
+                        .content("{\"nota\":5,\"materialId\":\"mat1\"}"))
                 .andExpect(status().isUnauthorized());
 
         verify(avaliacaoService, never()).criar(any(Avaliacao.class), any());
@@ -140,7 +136,7 @@ class AvaliacaoControllerTest {
                         .with(user("usuario"))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(avaliacao)))
+                        .content("{\"nota\":4,\"comentarioGeral\":\"Boa avaliação\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.nota").value(4))
                 .andExpect(jsonPath("$.comentarioGeral").value("Boa avaliação"));
