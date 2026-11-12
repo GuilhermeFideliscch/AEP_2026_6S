@@ -1,9 +1,9 @@
+
 package com.aep.redeSaber.controllers;
 
 import com.aep.redeSaber.models.User;
-import com.aep.redeSaber.repositories.UserRepository;
 import com.aep.redeSaber.services.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,38 +20,71 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<User> save(@RequestBody User user){
-        return ResponseEntity.status(201).body(userService.criar(user));
+    public ResponseEntity<Void> save(@RequestBody User user) {
+        userService.criar(user);
+        return ResponseEntity.status(201).build();
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(
+            @RequestBody LoginRequest request,
+            HttpSession session) {
+
+        return userService.autenticar(request.email().trim(), request.senha())
+                .map(user -> {
+                    session.setAttribute("usuarioId", user.getId());
+
+                    return ResponseEntity.ok(
+                            new LoginResponse(
+                                    user.getId(),
+                                    user.getNome(),
+                                    user.getEmail()
+                            )
+                    );
+                })
+                .orElse(ResponseEntity.status(401).build());
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpSession session) {
+        session.invalidate();
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping
-    public ResponseEntity<List<User>> findALL(){
+    public ResponseEntity<List<User>> findALL() {
         return ResponseEntity.ok(userService.listar());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> findById(@PathVariable String id){
+    public ResponseEntity<User> findById(@PathVariable String id) {
         return userService.listarPorId(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<User> update(@PathVariable String id, @RequestBody User user){
-        if(userService.listarPorId(id).isEmpty()){
+    public ResponseEntity<User> update(@PathVariable String id, @RequestBody User user) {
+        if (userService.listarPorId(id).isEmpty()) {
             return ResponseEntity.notFound().build();
         }
+
         return ResponseEntity.ok(userService.atualizar(user, id));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<User> delete(@PathVariable String id){
-        if(userService.listarPorId(id).isEmpty()) {
+    public ResponseEntity<Void> delete(@PathVariable String id) {
+        if (userService.listarPorId(id).isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
         userService.deletar(id);
-
         return ResponseEntity.noContent().build();
+    }
+
+    public record LoginRequest(String email, String senha) {
+    }
+
+    public record LoginResponse(String id, String nome, String email) {
     }
 }

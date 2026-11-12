@@ -1,3 +1,4 @@
+
 db = db.getSiblingDB("User");
 
 const validatorMaterial = {
@@ -10,19 +11,31 @@ required: [
         "usuarioId"
         ],
 properties: {
-_id: { bsonType: "string" },
-titulo: { bsonType: "string" },
-descricao: { bsonType: "string" },
-linkArquivo: { bsonType: "string" },
-usuarioId: { bsonType: "string" },
+_id: {
+bsonType: "string"
+        },
+titulo: {
+bsonType: "string"
+        },
+descricao: {
+bsonType: "string"
+        },
+linkArquivo: {
+bsonType: "string"
+        },
+usuarioId: {
+bsonType: "string"
+        },
 comentarios: {
 bsonType: "array",
 items: {
 bsonType: "object",
-required: ["autor", "texto"],
+required: ["texto"],
+additionalProperties: false,
 properties: {
-autor: { bsonType: "string" },
-texto: { bsonType: "string" }
+texto: {
+bsonType: "string"
+        }
         }
         }
         }
@@ -44,3 +57,8 @@ texto: { bsonType: "string" }
             validationAction: "error"
 });
         }
+
+        db.materiais.updateMany(
+{ comentarios: { $type: "array" } },
+        { $unset: { "comentarios.$[].autor": "" } }
+        );

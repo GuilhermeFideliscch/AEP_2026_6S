@@ -5,9 +5,10 @@ import com.aep.redeSaber.services.MaterialService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest; // <-- Mesmo import da sua classe funcional
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.context.annotation.Import;
+import com.aep.redeSaber.security.SecurityConfig;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -16,44 +17,55 @@ import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(MaterialController.class)
+@Import(SecurityConfig.class)
 class MaterialControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @MockitoBean
     private MaterialService materialService;
 
     @Test
-    @WithMockUser
-    void deveSalvarMaterialComSucesso() throws Exception {
+    void deveCriarMaterialAssociadoAoUsuarioDaSessao() throws Exception {
         Material material = new Material();
-        material.setId("1");
-        material.setTitulo("Java NoSQL");
+        material.setId("material-1");
+        material.setTitulo("Material de Matemática");
+        material.setUsuarioId("usuario-1");
 
-        when(materialService.criar(any(Material.class))).thenReturn(material);
+        when(materialService.criar(any(Material.class), eq("usuario-1"))).thenReturn(material);
 
         mockMvc.perform(post("/materiais")
-                        .with(csrf())
+                        .sessionAttr("usuarioId", "usuario-1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(material)))
+                        .content("{\"titulo\":\"Material de Matemática\",\"descricao\":\"Conteúdo\"}"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value("1"))
-                .andExpect(jsonPath("$.titulo").value("Java NoSQL"));
+                .andExpect(jsonPath("$.id").value("material-1"))
+                .andExpect(jsonPath("$.usuarioId").value("usuario-1"));
+
+        verify(materialService).criar(any(Material.class), eq("usuario-1"));
     }
 
     @Test
-    @WithMockUser
-    void deveListarTodosMateriais() throws Exception {
+    void deveRecusarCriacaoSemUsuarioNaSessao() throws Exception {
+        mockMvc.perform(post("/materiais")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"titulo\":\"Material\"}"))
+                .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(materialService);
+    }
+
+    @Test
+    void deveListarTodosOsMateriais() throws Exception {
         when(materialService.listar()).thenReturn(List.of(new Material(), new Material()));
 
         mockMvc.perform(get("/materiais"))
@@ -62,61 +74,70 @@ class MaterialControllerTest {
     }
 
     @Test
-    @WithMockUser
     void deveBuscarMaterialPorId() throws Exception {
         Material material = new Material();
-        material.setId("1");
+        material.setId("material-1");
+        when(materialService.listarPorId("material-1")).thenReturn(Optional.of(material));
 
-        when(materialService.listarPorId("1")).thenReturn(Optional.of(material));
-
-        mockMvc.perform(get("/materiais/1"))
+        mockMvc.perform(get("/materiais/material-1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value("1"));
+                .andExpect(jsonPath("$.id").value("material-1"));
     }
 
     @Test
-    @WithMockUser
-    void deveRetornarNotFoundQuandoMaterialNaoExistirPorId() throws Exception {
-        when(materialService.listarPorId("99")).thenReturn(Optional.empty());
+    void deveRetornarNotFoundQuandoMaterialNaoExistir() throws Exception {
+        when(materialService.listarPorId("inexistente")).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/materiais/99"))
+        mockMvc.perform(get("/materiais/inexistente"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
-    @WithMockUser
-    void deveListarMateriaisPorUsuario() throws Exception {
-        when(materialService.listarPorUsuario("user1")).thenReturn(List.of(new Material()));
+    void deveListarMateriaisDoUsuarioDaSessao() throws Exception {
+        when(materialService.listarPorUsuario("usuario-1")).thenReturn(List.of(new Material()));
 
-        mockMvc.perform(get("/materiais/usuario/user1"))
+        mockMvc.perform(get("/materiais/usuario").sessionAttr("usuarioId", "usuario-1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
+
+        verify(materialService).listarPorUsuario("usuario-1");
     }
 
     @Test
-    @WithMockUser
+    void deveRecusarListagemPorUsuarioSemSessao() throws Exception {
+        mockMvc.perform(get("/materiais/usuario"))
+                .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(materialService);
+    }
+
+    @Test
     void deveAtualizarMaterial() throws Exception {
-        Material material = new Material();
-        material.setId("1");
-        material.setTitulo("Atualizado");
+        Material entrada = new Material();
+        entrada.setTitulo("Título atualizado");
 
-        when(materialService.atualizar(any(Material.class), eq("1"))).thenReturn(material);
+        Material atualizado = new Material();
+        atualizado.setId("material-1");
+        atualizado.setTitulo("Título atualizado");
+        atualizado.setUsuarioId("usuario-original");
 
-        mockMvc.perform(put("/materiais/1")
-                        .with(csrf())
+        when(materialService.atualizar(any(Material.class), eq("material-1"))).thenReturn(atualizado);
+
+        mockMvc.perform(put("/materiais/material-1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(material)))
+                        .content(objectMapper.writeValueAsString(entrada)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.titulo").value("Atualizado"));
+                .andExpect(jsonPath("$.titulo").value("Título atualizado"))
+                .andExpect(jsonPath("$.usuarioId").value("usuario-original"));
     }
 
     @Test
-    @WithMockUser
     void deveDeletarMaterial() throws Exception {
-        doNothing().when(materialService).deletar("1");
+        doNothing().when(materialService).deletar("material-1");
 
-        mockMvc.perform(delete("/materiais/1")
-                        .with(csrf()))
+        mockMvc.perform(delete("/materiais/material-1"))
                 .andExpect(status().isNoContent());
+
+        verify(materialService).deletar("material-1");
     }
 }

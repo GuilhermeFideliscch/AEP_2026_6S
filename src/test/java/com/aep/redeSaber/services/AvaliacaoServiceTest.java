@@ -1,3 +1,4 @@
+
 package com.aep.redeSaber.services;
 
 import com.aep.redeSaber.exceptions.ResourceNotFoundException;
@@ -40,16 +41,18 @@ class AvaliacaoServiceTest {
     void deveCriarAvaliacaoComSucesso() {
         Avaliacao avaliacao = new Avaliacao();
         avaliacao.setNota(5);
-        avaliacao.setUsuarioId("user1");
         avaliacao.setMaterialId("mat1");
 
         when(userRepository.findById("user1")).thenReturn(Optional.of(new User()));
         when(materialRepository.findById("mat1")).thenReturn(Optional.of(new Material()));
-        when(avaliacaoRepository.save(any(Avaliacao.class))).thenReturn(avaliacao);
+        when(avaliacaoRepository.save(any(Avaliacao.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
-        Avaliacao resultado = avaliacaoService.criar(avaliacao);
+        Avaliacao resultado = avaliacaoService.criar(avaliacao, "user1");
 
         assertThat(resultado.getNota()).isEqualTo(5);
+        assertThat(resultado.getUsuarioId()).isEqualTo("user1");
+
         verify(userRepository).findById("user1");
         verify(materialRepository).findById("mat1");
         verify(avaliacaoRepository).save(avaliacao);
@@ -58,14 +61,14 @@ class AvaliacaoServiceTest {
     @Test
     void deveLancarExcecaoAoCriarAvaliacaoComUsuarioInexistente() {
         Avaliacao avaliacao = new Avaliacao();
-        avaliacao.setUsuarioId("inexistente");
         avaliacao.setMaterialId("mat1");
 
         when(userRepository.findById("inexistente")).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> {
-            avaliacaoService.criar(avaliacao);
-        });
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> avaliacaoService.criar(avaliacao, "inexistente")
+        );
 
         verify(userRepository).findById("inexistente");
         verify(materialRepository, never()).findById(any());
@@ -75,99 +78,112 @@ class AvaliacaoServiceTest {
     @Test
     void deveLancarExcecaoAoCriarAvaliacaoComMaterialInexistente() {
         Avaliacao avaliacao = new Avaliacao();
-        avaliacao.setUsuarioId("user1");
         avaliacao.setMaterialId("inexistente");
 
         when(userRepository.findById("user1")).thenReturn(Optional.of(new User()));
         when(materialRepository.findById("inexistente")).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> {
-            avaliacaoService.criar(avaliacao);
-        });
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> avaliacaoService.criar(avaliacao, "user1")
+        );
 
         verify(materialRepository).findById("inexistente");
         verify(avaliacaoRepository, never()).save(any());
     }
 
     @Test
-    void deveListarTodasAvaliacoes() {
-        when(avaliacaoRepository.findAll()).thenReturn(List.of(new Avaliacao(), new Avaliacao()));
+    void deveListarAvaliacoes() {
+        Avaliacao avaliacao = new Avaliacao();
+        avaliacao.setId("1");
+
+        when(avaliacaoRepository.findAll()).thenReturn(List.of(avaliacao));
 
         List<Avaliacao> resultado = avaliacaoService.listar();
 
-        assertThat(resultado).hasSize(2);
-        verify(avaliacaoRepository).findAll();
+        assertThat(resultado).hasSize(1);
+        assertThat(resultado.get(0).getId()).isEqualTo("1");
     }
 
     @Test
-    void deveListarAvaliacaoPorId() {
+    void deveBuscarAvaliacaoPorId() {
         Avaliacao avaliacao = new Avaliacao();
-        avaliacao.setId("av1");
+        avaliacao.setId("1");
 
-        when(avaliacaoRepository.findById("av1")).thenReturn(Optional.of(avaliacao));
+        when(avaliacaoRepository.findById("1")).thenReturn(Optional.of(avaliacao));
 
-        Optional<Avaliacao> resultado = avaliacaoService.listarPorId("av1");
+        Optional<Avaliacao> resultado = avaliacaoService.listarPorId("1");
 
         assertThat(resultado).isPresent();
-        assertThat(resultado.get().getId()).isEqualTo("av1");
+        assertThat(resultado.get().getId()).isEqualTo("1");
     }
 
     @Test
     void deveListarAvaliacoesPorMaterial() {
-        when(avaliacaoRepository.findByMaterialId("mat1")).thenReturn(List.of(new Avaliacao()));
+        Avaliacao avaliacao = new Avaliacao();
+        avaliacao.setMaterialId("mat1");
+
+        when(avaliacaoRepository.findByMaterialId("mat1")).thenReturn(List.of(avaliacao));
 
         List<Avaliacao> resultado = avaliacaoService.listarPorMaterial("mat1");
 
         assertThat(resultado).hasSize(1);
-        verify(avaliacaoRepository).findByMaterialId("mat1");
+        assertThat(resultado.get(0).getMaterialId()).isEqualTo("mat1");
     }
 
     @Test
-    void deveAtualizarAvaliacaoComSucesso() {
+    void deveAtualizarAvaliacao() {
         Avaliacao existente = new Avaliacao();
-        existente.setId("av1");
+        existente.setId("1");
         existente.setNota(3);
 
-        Avaliacao novosDados = new Avaliacao();
-        novosDados.setNota(5);
-        novosDados.setComentarioGeral("Excelente!");
+        Avaliacao atualizacao = new Avaliacao();
+        atualizacao.setNota(5);
+        atualizacao.setComentarioGeral("Atualizada");
 
-        when(avaliacaoRepository.findById("av1")).thenReturn(Optional.of(existente));
-        when(avaliacaoRepository.save(any(Avaliacao.class))).thenReturn(existente);
+        when(avaliacaoRepository.findById("1")).thenReturn(Optional.of(existente));
+        when(avaliacaoRepository.save(any(Avaliacao.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
-        Avaliacao resultado = avaliacaoService.atualizar(novosDados, "av1");
+        Avaliacao resultado = avaliacaoService.atualizar(atualizacao, "1");
 
         assertThat(resultado.getNota()).isEqualTo(5);
-        assertThat(resultado.getComentarioGeral()).isEqualTo("Excelente!");
+        assertThat(resultado.getComentarioGeral()).isEqualTo("Atualizada");
         verify(avaliacaoRepository).save(existente);
     }
 
     @Test
     void deveLancarExcecaoAoAtualizarAvaliacaoInexistente() {
-        when(avaliacaoRepository.findById("999")).thenReturn(Optional.empty());
+        Avaliacao atualizacao = new Avaliacao();
 
-        assertThrows(ResourceNotFoundException.class, () -> {
-            avaliacaoService.atualizar(new Avaliacao(), "999");
-        });
+        when(avaliacaoRepository.findById("inexistente")).thenReturn(Optional.empty());
+
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> avaliacaoService.atualizar(atualizacao, "inexistente")
+        );
+
+        verify(avaliacaoRepository, never()).save(any());
     }
 
     @Test
-    void deveDeletarAvaliacaoComSucesso() {
-        when(avaliacaoRepository.existsById("av1")).thenReturn(true);
-        doNothing().when(avaliacaoRepository).deleteById("av1");
+    void deveDeletarAvaliacao() {
+        when(avaliacaoRepository.existsById("1")).thenReturn(true);
 
-        avaliacaoService.deletar("av1");
+        avaliacaoService.deletar("1");
 
-        verify(avaliacaoRepository).existsById("av1");
-        verify(avaliacaoRepository).deleteById("av1");
+        verify(avaliacaoRepository).deleteById("1");
     }
 
     @Test
     void deveLancarExcecaoAoDeletarAvaliacaoInexistente() {
-        when(avaliacaoRepository.existsById("999")).thenReturn(false);
+        when(avaliacaoRepository.existsById("inexistente")).thenReturn(false);
 
-        assertThrows(ResourceNotFoundException.class, () -> {
-            avaliacaoService.deletar("999");
-        });
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> avaliacaoService.deletar("inexistente")
+        );
+
+        verify(avaliacaoRepository, never()).deleteById(any());
     }
 }

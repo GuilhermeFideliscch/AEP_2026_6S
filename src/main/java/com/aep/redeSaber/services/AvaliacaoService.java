@@ -1,3 +1,4 @@
+
 package com.aep.redeSaber.services;
 
 import com.aep.redeSaber.exceptions.ResourceNotFoundException;
@@ -25,13 +26,18 @@ public class AvaliacaoService {
         this.materialRepository = materialRepository;
     }
 
-    public Avaliacao criar(Avaliacao avaliacao) {
-        if (avaliacao.getUsuarioId() != null && userRepository.findById(avaliacao.getUsuarioId()).isEmpty()) {
+    public Avaliacao criar(Avaliacao avaliacao, String usuarioId) {
+        if (userRepository.findById(usuarioId).isEmpty()) {
             throw new ResourceNotFoundException("Usuário avaliador não encontrado");
         }
-        if (avaliacao.getMaterialId() != null && materialRepository.findById(avaliacao.getMaterialId()).isEmpty()) {
+
+        if (avaliacao.getMaterialId() == null
+                || materialRepository.findById(avaliacao.getMaterialId()).isEmpty()) {
             throw new ResourceNotFoundException("Material avaliado não encontrado");
         }
+
+        avaliacao.setUsuarioId(usuarioId);
+
         return avaliacaoRepository.save(avaliacao);
     }
 
@@ -62,6 +68,7 @@ public class AvaliacaoService {
         if (!avaliacaoRepository.existsById(id)) {
             throw new ResourceNotFoundException("Avaliação não encontrada");
         }
+
         avaliacaoRepository.deleteById(id);
     }
 }

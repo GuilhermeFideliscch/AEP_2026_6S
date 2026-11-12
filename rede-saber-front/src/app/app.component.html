@@ -1,0 +1,135 @@
+<main class="app-shell">
+  <section *ngIf="!isLoggedIn && !mostrarTelaCadastro" class="auth-layout">
+    <div class="auth-showcase">
+      <div class="showcase-top"><div class="brand-mark">R<span>.</span></div><span class="brand-name">REDE SABER</span></div>
+      <div class="showcase-copy">
+        <span class="eyebrow">PLATAFORMA ACADÊMICA</span>
+        <h1>Conhecimento que conecta. <em>Ideias que transformam.</em></h1>
+        <p>Um espaço para compartilhar materiais, organizar avaliações e fortalecer a aprendizagem.</p>
+      </div>
+      <div class="showcase-bottom"><div class="showcase-line"></div><span>AMBIENTE DE DEMONSTRAÇÃO · AEP</span></div>
+      <div class="orb orb-one"></div><div class="orb orb-two"></div>
+    </div>
+
+    <div class="auth-panel">
+      <div class="auth-mobile-brand"><div class="brand-mark">R<span>.</span></div><span class="brand-name">REDE SABER</span></div>
+      <div class="auth-card">
+        <div class="section-kicker">SEU ESPAÇO DE APRENDIZAGEM</div>
+        <h2>Bem-vindo de volta</h2>
+        <p class="muted">Entre com suas credenciais para acessar a plataforma.</p>
+        <div *ngIf="mensagemErro" class="notice notice-error"><span class="notice-icon">!</span>{{ mensagemErro }}</div>
+        <div *ngIf="mensagemSucesso" class="notice notice-success"><span class="notice-icon">✓</span>{{ mensagemSucesso }}</div>
+        <form (ngSubmit)="fazerLogin()" class="form-stack">
+          <label class="field-label">E-mail
+            <input type="email" name="loginEmail" [(ngModel)]="loginData.email" placeholder="voce@exemplo.com" autocomplete="username" required>
+          </label>
+          <label class="field-label">Senha
+            <input type="password" name="loginSenha" [(ngModel)]="loginData.senha" placeholder="Digite sua senha" autocomplete="current-password" required>
+          </label>
+          <button class="button button-primary button-full" type="submit" [disabled]="carregandoLogin">
+            <span>{{ carregandoLogin ? 'Validando acesso...' : 'Entrar na plataforma' }}</span><span class="button-arrow">→</span>
+          </button>
+        </form>
+        <div class="auth-switch"><span>Primeiro acesso?</span><button type="button" class="text-button" (click)="alternarCadastro(true)">Criar uma conta</button></div>
+        <div class="auth-footnote"><span class="status-dot"></span> Conexão com a API em localhost:8080</div>
+      </div>
+    </div>
+  </section>
+
+  <section *ngIf="!isLoggedIn && mostrarTelaCadastro" class="register-layout">
+    <div class="register-aside">
+      <button class="back-link" type="button" (click)="alternarCadastro(false)">← Voltar ao login</button>
+      <div class="brand-lockup"><div class="brand-mark">R<span>.</span></div><span class="brand-name">REDE SABER</span></div>
+      <div class="register-message"><span class="eyebrow">FAÇA PARTE</span><h1>O próximo passo do seu aprendizado começa aqui.</h1><p>Crie seu acesso para explorar e compartilhar conhecimento.</p></div>
+      <span class="aside-caption">REDE SABER · AEP</span>
+    </div>
+    <div class="register-main">
+      <div class="register-card">
+        <div class="section-kicker">NOVO CADASTRO</div><h2>Criar sua conta</h2><p class="muted">Preencha os dados abaixo para começar.</p>
+        <div *ngIf="mensagemErro" class="notice notice-error"><span class="notice-icon">!</span>{{ mensagemErro }}</div>
+        <form (ngSubmit)="salvarNovoUsuario()" class="form-stack">
+          <div class="form-grid">
+            <label class="field-label span-two">Nome completo<input name="cadNome" [(ngModel)]="novoUsuario.nome" placeholder="Seu nome" autocomplete="name" required></label>
+            <label class="field-label">E-mail<input type="email" name="cadEmail" [(ngModel)]="novoUsuario.email" placeholder="voce@exemplo.com" autocomplete="email" required></label>
+            <label class="field-label">Telefone<input name="cadTelefone" [(ngModel)]="novoUsuario.telefone" placeholder="(00) 00000-0000" required></label>
+            <label class="field-label span-two">Senha<input type="password" name="cadSenha" [(ngModel)]="novoUsuario.senha" placeholder="Crie uma senha" autocomplete="new-password" required></label>
+          </div>
+          <div class="form-divider"><span>ENDEREÇO <small>OPCIONAL</small></span></div>
+          <div class="form-grid">
+            <label class="field-label span-two">Rua / Avenida<input name="cadRua" [(ngModel)]="novoUsuario.rua" placeholder="Logradouro"></label>
+            <label class="field-label">Cidade<input name="cadCidade" [(ngModel)]="novoUsuario.cidade" placeholder="Cidade"></label>
+            <label class="field-label">Estado<input name="cadEstado" [(ngModel)]="novoUsuario.estado" placeholder="UF"></label>
+          </div>
+          <button class="button button-primary button-full" type="submit" [disabled]="carregandoCadastro">{{ carregandoCadastro ? 'Criando conta...' : 'Finalizar cadastro' }} <span class="button-arrow">→</span></button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <section *ngIf="isLoggedIn" class="workspace">
+    <aside class="sidebar">
+      <div class="sidebar-brand"><div class="brand-mark">R<span>.</span></div><div><strong>REDE SABER</strong><small>PAINEL DE GESTÃO</small></div></div>
+      <div class="sidebar-label">MENU PRINCIPAL</div>
+      <nav class="side-nav">
+        <button type="button" [class.active]="abaAtiva === 'visao-geral'" (click)="navegarPara('visao-geral')"><span class="nav-icon">◫</span> Visão geral</button>
+        <button type="button" [class.active]="abaAtiva === 'usuarios'" (click)="navegarPara('usuarios')"><span class="nav-icon">♙</span> Usuários <span class="nav-count">{{ usuarios.length }}</span></button>
+        <button type="button" [class.active]="abaAtiva === 'materiais'" (click)="navegarPara('materiais')"><span class="nav-icon">▤</span> Materiais <span class="nav-count">{{ materiais.length }}</span></button>
+        <button type="button" [class.active]="abaAtiva === 'avaliacoes'" (click)="navegarPara('avaliacoes')"><span class="nav-icon">☆</span> Avaliações <span class="nav-count">{{ avaliacoes.length }}</span></button>
+      </nav>
+      <div class="sidebar-bottom"><div class="api-status"><span class="status-dot"></span><div><strong>API configurada</strong><small>localhost:8080</small></div></div><button type="button" class="logout-button" (click)="fazerLogout()"><span>↪</span> Encerrar sessão</button></div>
+    </aside>
+
+    <div class="main-area">
+      <header class="topbar"><div class="breadcrumb">Rede Saber <span>/</span> <strong>{{ abaAtiva === 'visao-geral' ? 'Visão geral' : abaAtiva === 'usuarios' ? 'Usuários' : abaAtiva === 'materiais' ? 'Materiais' : 'Avaliações' }}</strong></div><div class="topbar-user"><div class="avatar">{{ usuarioLogado?.nome?.charAt(0)?.toUpperCase() || 'U' }}</div><div><strong>{{ usuarioLogado?.nome }}</strong><small>{{ usuarioLogado?.email }}</small></div></div></header>
+      <div class="content-wrap">
+        <div *ngIf="mensagemErro" class="notice notice-error global-notice"><span class="notice-icon">!</span>{{ mensagemErro }}<button type="button" (click)="mensagemErro = ''">×</button></div>
+        <div *ngIf="mensagemSucesso" class="notice notice-success global-notice"><span class="notice-icon">✓</span>{{ mensagemSucesso }}<button type="button" (click)="mensagemSucesso = ''">×</button></div>
+
+        <section *ngIf="abaAtiva === 'visao-geral'" class="page-section">
+          <div class="page-heading"><div><span class="section-kicker">RESUMO DA PLATAFORMA</span><h1>Visão geral</h1><p>Acompanhe os registros e gerencie os dados da Rede Saber.</p></div><span class="date-chip">PAINEL ADMINISTRATIVO</span></div>
+          <div class="welcome-banner"><div><span class="eyebrow">BEM-VINDO(A)</span><h2>{{ usuarioLogado?.nome }}</h2><p>Seu ambiente está pronto para gerenciar usuários, materiais e avaliações.</p></div><div class="welcome-art"><span>R</span><i></i><b></b></div></div>
+          <div class="stats-grid">
+            <button type="button" class="stat-card stat-blue" (click)="navegarPara('usuarios')"><span class="stat-icon">♙</span><span class="stat-label">USUÁRIOS CADASTRADOS</span><strong>{{ usuarios.length }}</strong><small>Consultar usuários <b>→</b></small></button>
+            <button type="button" class="stat-card stat-green" (click)="navegarPara('materiais')"><span class="stat-icon">▤</span><span class="stat-label">MATERIAIS PUBLICADOS</span><strong>{{ materiais.length }}</strong><small>Gerenciar materiais <b>→</b></small></button>
+            <button type="button" class="stat-card stat-orange" (click)="navegarPara('avaliacoes')"><span class="stat-icon">☆</span><span class="stat-label">AVALIAÇÕES REGISTRADAS</span><strong>{{ avaliacoes.length }}</strong><small>Ver avaliações <b>→</b></small></button>
+          </div>
+          <div class="dashboard-bottom-grid"><article class="panel quick-panel"><div class="panel-heading"><div><span class="section-kicker">ATALHOS</span><h3>Ações rápidas</h3></div></div><div class="quick-actions"><button type="button" (click)="navegarPara('usuarios')"><span>＋</span><div><strong>Gerenciar usuários</strong><small>Consultar, cadastrar e editar</small></div><b>→</b></button><button type="button" (click)="navegarPara('materiais')"><span>＋</span><div><strong>Publicar material</strong><small>Adicionar conteúdo à plataforma</small></div><b>→</b></button><button type="button" (click)="navegarPara('avaliacoes')"><span>＋</span><div><strong>Registrar avaliação</strong><small>Avaliar um material publicado</small></div><b>→</b></button></div></article><article class="panel api-panel"><span class="section-kicker">INTEGRAÇÃO</span><h3>Serviços conectados</h3><div class="api-row"><span class="api-dot"></span><div><strong>Usuários</strong><small>GET · POST · PUT · DELETE</small></div><span class="api-tag">/users</span></div><div class="api-row"><span class="api-dot"></span><div><strong>Materiais</strong><small>GET · POST · PUT · DELETE</small></div><span class="api-tag">/materiais</span></div><div class="api-row"><span class="api-dot"></span><div><strong>Avaliações</strong><small>GET · POST · PUT · DELETE</small></div><span class="api-tag">/avaliacoes</span></div></article></div>
+        </section>
+
+        <section *ngIf="abaAtiva === 'usuarios'" class="page-section">
+          <div class="page-heading"><div><span class="section-kicker">GESTÃO DE ACESSO</span><h1>Usuários</h1><p>Consulte os usuários cadastrados e gerencie seus registros.</p></div><button type="button" class="button button-primary" (click)="carregarUsuarios()">↻ Atualizar lista</button></div>
+          <div class="panel table-panel"><div class="panel-toolbar"><div><h3>Todos os usuários</h3><small>{{ usuarios.length }} registro(s) encontrado(s)</small></div><label class="search-box"><span>⌕</span><input [(ngModel)]="buscaUsuarios" placeholder="Buscar por nome ou e-mail"></label></div>
+            <div class="table-scroll"><table><thead><tr><th>USUÁRIO</th><th>TELEFONE</th><th>STATUS</th><th>DATA DE CADASTRO</th><th class="align-right">AÇÕES</th></tr></thead><tbody>
+              <tr *ngFor="let u of usuariosFiltrados"><td><div class="person-cell"><span class="table-avatar">{{ u.nome?.charAt(0)?.toUpperCase() || 'U' }}</span><div><strong>{{ u.nome }}</strong><small>{{ u.email }}</small></div></div></td><td>{{ u.telefone || '—' }}</td><td><span class="status-pill" [class.inactive]="u.ativo === false">{{ u.ativo === false ? 'Inativo' : 'Ativo' }}</span></td><td>{{ u.dataCriacao ? (u.dataCriacao | date:'dd/MM/yyyy') : '—' }}</td><td class="align-right"><button type="button" class="icon-action" title="Editar" (click)="abrirEdicaoUsuario(u)">✎</button><button type="button" class="icon-action danger" title="Excluir" (click)="deletarUsuario(u.id)">⌫</button></td></tr>
+              <tr *ngIf="!carregandoUsuarios && usuariosFiltrados.length === 0"><td colspan="5"><div class="empty-state"><span>♙</span><strong>Nenhum usuário encontrado</strong><small>Cadastre um usuário ou altere sua busca.</small></div></td></tr>
+              <tr *ngIf="carregandoUsuarios"><td colspan="5" class="loading-row">Carregando usuários...</td></tr>
+            </tbody></table></div>
+          </div>
+        </section>
+
+        <section *ngIf="abaAtiva === 'materiais'" class="page-section">
+          <div class="page-heading"><div><span class="section-kicker">BIBLIOTECA DE CONTEÚDO</span><h1>Materiais</h1><p>Publique conteúdos e acompanhe os materiais de todos os usuários.</p></div><button type="button" class="button button-secondary" (click)="carregarMateriais()">↻ Atualizar lista</button></div>
+          <div class="panel create-panel"><div class="panel-heading"><div><span class="section-kicker">NOVO CONTEÚDO</span><h3>Adicionar material</h3><p>O usuário responsável será identificado automaticamente pela sessão.</p></div><span class="panel-symbol green-symbol">＋</span></div><form (ngSubmit)="salvarMaterial()" class="create-grid"><label class="field-label">Título<input name="materialTitulo" [(ngModel)]="novoMaterial.titulo" placeholder="Ex.: Introdução à programação" required></label><label class="field-label">Link do arquivo<input name="materialLink" [(ngModel)]="novoMaterial.linkArquivo" type="url" placeholder="https://..." required></label><label class="field-label full-field">Descrição<textarea name="materialDescricao" [(ngModel)]="novoMaterial.descricao" rows="2" placeholder="Descreva brevemente o conteúdo" required></textarea></label><div class="form-actions"><button type="submit" class="button button-primary" [disabled]="salvando">{{ salvando ? 'Salvando...' : '＋ Publicar material' }}</button></div></form></div>
+          <div class="materials-heading"><div><h3>Todos os materiais</h3><small>{{ materiais.length }} material(is) publicado(s)</small></div><label class="search-box"><span>⌕</span><input [(ngModel)]="buscaMateriais" placeholder="Buscar material"></label></div>
+          <div class="material-grid"><article class="material-card" *ngFor="let m of materiaisFiltrados"><div class="material-card-top"><span class="material-type">MATERIAL DIDÁTICO</span><button type="button" class="icon-action danger" title="Excluir" (click)="deletarMaterial(m.id)">⌫</button></div><h3>{{ m.titulo }}</h3><p>{{ m.descricao }}</p><a class="material-link" [href]="m.linkArquivo" target="_blank" rel="noopener noreferrer">Abrir arquivo <span>↗</span></a><div class="material-comments"><div class="comments-title"><strong>Comentários</strong><span>{{ m.comentarios?.length ?? 0 }}</span></div><div class="comment-item" *ngFor="let c of m.comentarios"><span class="comment-bullet"></span>{{ c.texto }}</div><div *ngIf="!m.comentarios?.length" class="no-comments">Ainda não há comentários.</div><div class="comment-entry"><input [(ngModel)]="novoComentario[m.id]" [name]="'comentario-' + m.id" placeholder="Adicionar comentário"><button type="button" (click)="adicionarComentario(m)" aria-label="Enviar comentário">↑</button></div></div><div class="material-card-footer"><span>{{ nomeUsuario(m.usuarioId) }} · ID {{ resumirId(m.id) }}</span><button type="button" class="text-button" (click)="abrirEdicaoMaterial(m)">Editar material</button></div></article>
+            <div *ngIf="!carregandoMateriais && materiaisFiltrados.length === 0" class="empty-state empty-panel"><span>▤</span><strong>Nenhum material encontrado</strong><small>Nenhum material foi publicado. Cadastre um material usando o formulário acima.</small></div>
+            <div *ngIf="carregandoMateriais" class="loading-card">Carregando materiais...</div>
+          </div>
+        </section>
+
+        <section *ngIf="abaAtiva === 'avaliacoes'" class="page-section">
+          <div class="page-heading"><div><span class="section-kicker">FEEDBACK E QUALIDADE</span><h1>Avaliações</h1><p>Registre notas e critérios para os materiais disponíveis.</p></div><button type="button" class="button button-secondary" (click)="carregarAvaliacoes()">↻ Atualizar lista</button></div>
+          <div class="panel create-panel"><div class="panel-heading"><div><span class="section-kicker">NOVA AVALIAÇÃO</span><h3>Avaliar material</h3><p>O avaliador é identificado automaticamente. Selecione o autor e depois o material que deseja avaliar.</p></div><span class="panel-symbol orange-symbol">☆</span></div><form (ngSubmit)="salvarAvaliacao()" class="create-grid evaluation-form"><label class="field-label">Autor do material<select name="autorMaterial" [ngModel]="novaAvaliacao.autorId" (ngModelChange)="selecionarAutor($event)" required><option value="">Selecione o autor</option><option *ngFor="let u of usuarios" [value]="u.id">{{ u.nome }}</option></select></label><label class="field-label">Material<select name="materialAvaliado" [(ngModel)]="novaAvaliacao.materialId" [disabled]="!novaAvaliacao.autorId || materiaisDoAutor.length === 0" required><option value="">{{ !novaAvaliacao.autorId ? 'Selecione primeiro o autor' : materiaisDoAutor.length === 0 ? 'Este autor não possui materiais' : 'Selecione o material' }}</option><option *ngFor="let m of materiaisDoAutor" [value]="m.id">{{ m.titulo }}</option></select></label><label class="field-label">Nota<select name="nota" [(ngModel)]="novaAvaliacao.nota"><option [ngValue]="5">5 · Excelente</option><option [ngValue]="4">4 · Muito bom</option><option [ngValue]="3">3 · Bom</option><option [ngValue]="2">2 · Regular</option><option [ngValue]="1">1 · Insuficiente</option></select></label><label class="field-label">Critério<input name="criterio" [(ngModel)]="novaAvaliacao.criterioNome" placeholder="Ex.: Clareza" required></label><label class="field-label">Peso do critério<input name="peso" type="number" min="1" step="1" [(ngModel)]="novaAvaliacao.criterioPeso" required></label><label class="field-label full-field">Comentário geral<textarea name="comentarioGeral" [(ngModel)]="novaAvaliacao.comentarioGeral" rows="2" placeholder="Escreva uma observação sobre o material"></textarea></label><div class="form-actions"><button type="submit" class="button button-primary" [disabled]="salvando">{{ salvando ? 'Registrando...' : '＋ Registrar avaliação' }}</button></div></form></div>
+          <div class="panel table-panel"><div class="panel-toolbar"><div><h3>Avaliações registradas</h3><small>{{ avaliacoes.length }} avaliação(ões)</small></div><label class="search-box"><span>⌕</span><input [(ngModel)]="buscaAvaliacoes" placeholder="Buscar avaliação"></label></div><div class="table-scroll"><table><thead><tr><th>NOTA</th><th>MATERIAL</th><th>AVALIADOR</th><th>COMENTÁRIO</th><th class="align-right">AÇÕES</th></tr></thead><tbody><tr *ngFor="let a of avaliacoesFiltradas"><td><span class="rating-value">★ {{ a.nota }}/5</span></td><td><strong>{{ tituloMaterial(a.materialId) }}</strong><small class="table-subline">{{ resumirId(a.materialId) }}</small></td><td>{{ nomeUsuario(a.usuarioId) }}</td><td class="comment-cell">{{ a.comentarioGeral || 'Sem comentário' }}</td><td class="align-right"><button type="button" class="icon-action" title="Editar" (click)="abrirEdicaoAvaliacao(a)">✎</button><button type="button" class="icon-action danger" title="Excluir" (click)="deletarAvaliacao(a.id)">⌫</button></td></tr><tr *ngIf="!carregandoAvaliacoes && avaliacoesFiltradas.length === 0"><td colspan="5"><div class="empty-state"><span>☆</span><strong>Nenhuma avaliação encontrada</strong><small>Registre uma avaliação no formulário acima.</small></div></td></tr><tr *ngIf="carregandoAvaliacoes"><td colspan="5" class="loading-row">Carregando avaliações...</td></tr></tbody></table></div></div>
+        </section>
+      </div>
+      <footer class="main-footer"><span>REDE SABER · AEP ENGENHARIA DE SOFTWARE</span><span>Plataforma de gestão acadêmica</span></footer>
+    </div>
+  </section>
+
+  <div *ngIf="usuarioEmEdicao" class="modal-backdrop" (click)="usuarioEmEdicao = null"><section class="modal-card" (click)="$event.stopPropagation()"><div class="modal-heading"><div><span class="section-kicker">USUÁRIOS</span><h2>Editar usuário</h2></div><button type="button" class="modal-close" (click)="usuarioEmEdicao = null">×</button></div><form (ngSubmit)="atualizarUsuario()" class="form-stack"><label class="field-label">Nome<input name="editUserName" [(ngModel)]="usuarioEmEdicao.nome" required></label><label class="field-label">E-mail<input type="email" name="editUserEmail" [(ngModel)]="usuarioEmEdicao.email" required></label><label class="field-label">Telefone<input name="editUserPhone" [(ngModel)]="usuarioEmEdicao.telefone" required></label><label class="field-label">Nova senha<input type="password" name="editUserPassword" [(ngModel)]="usuarioEmEdicao.senha" placeholder="Obrigatória para atualizar" required></label><label class="field-label">Status<select name="editUserActive" [(ngModel)]="usuarioEmEdicao.ativo"><option [ngValue]="true">Ativo</option><option [ngValue]="false">Inativo</option></select></label><div class="modal-actions"><button type="button" class="button button-ghost" (click)="usuarioEmEdicao = null">Cancelar</button><button type="submit" class="button button-primary" [disabled]="salvando">{{ salvando ? 'Salvando...' : 'Salvar alterações' }}</button></div></form></section></div>
+
+  <div *ngIf="materialEmEdicao" class="modal-backdrop" (click)="materialEmEdicao = null"><section class="modal-card" (click)="$event.stopPropagation()"><div class="modal-heading"><div><span class="section-kicker">BIBLIOTECA</span><h2>Editar material</h2></div><button type="button" class="modal-close" (click)="materialEmEdicao = null">×</button></div><form (ngSubmit)="atualizarMaterial()" class="form-stack"><label class="field-label">Título<input name="editMaterialTitle" [(ngModel)]="materialEmEdicao.titulo" required></label><label class="field-label">Descrição<textarea name="editMaterialDescription" [(ngModel)]="materialEmEdicao.descricao" rows="3" required></textarea></label><label class="field-label">Link do arquivo<input name="editMaterialLink" [(ngModel)]="materialEmEdicao.linkArquivo" required></label><div class="modal-actions"><button type="button" class="button button-ghost" (click)="materialEmEdicao = null">Cancelar</button><button type="submit" class="button button-primary" [disabled]="salvando">{{ salvando ? 'Salvando...' : 'Salvar alterações' }}</button></div></form></section></div>
+
+  <div *ngIf="avaliacaoEmEdicao" class="modal-backdrop" (click)="avaliacaoEmEdicao = null"><section class="modal-card" (click)="$event.stopPropagation()"><div class="modal-heading"><div><span class="section-kicker">FEEDBACK</span><h2>Editar avaliação</h2></div><button type="button" class="modal-close" (click)="avaliacaoEmEdicao = null">×</button></div><form (ngSubmit)="atualizarAvaliacao()" class="form-stack"><label class="field-label">Nota<select name="editRating" [(ngModel)]="avaliacaoEmEdicao.nota"><option [ngValue]="5">5</option><option [ngValue]="4">4</option><option [ngValue]="3">3</option><option [ngValue]="2">2</option><option [ngValue]="1">1</option></select></label><label class="field-label">Comentário geral<textarea name="editRatingComment" [(ngModel)]="avaliacaoEmEdicao.comentarioGeral" rows="3"></textarea></label><div class="criteria-edit" *ngFor="let c of avaliacaoEmEdicao.criterios; let i = index"><label class="field-label">Critério {{ i + 1 }}<input [name]="'editCriterionName' + i" [(ngModel)]="c.nome"></label><label class="field-label">Peso<input type="number" [name]="'editCriterionWeight' + i" [(ngModel)]="c.peso"></label></div><div class="modal-actions"><button type="button" class="button button-ghost" (click)="avaliacaoEmEdicao = null">Cancelar</button><button type="submit" class="button button-primary" [disabled]="salvando">{{ salvando ? 'Salvando...' : 'Salvar alterações' }}</button></div></form></section></div>
+</main>

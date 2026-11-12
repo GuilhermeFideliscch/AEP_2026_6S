@@ -1,7 +1,9 @@
+
 package com.aep.redeSaber.controllers;
 
 import com.aep.redeSaber.models.Avaliacao;
 import com.aep.redeSaber.services.AvaliacaoService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,8 +20,14 @@ public class AvaliacaoController {
     }
 
     @PostMapping
-    public ResponseEntity<Avaliacao> save(@RequestBody Avaliacao avaliacao) {
-        return ResponseEntity.status(201).body(avaliacaoService.criar(avaliacao));
+    public ResponseEntity<Avaliacao> save(@RequestBody Avaliacao avaliacao, HttpSession session) {
+        String usuarioId = (String) session.getAttribute("usuarioId");
+
+        if (usuarioId == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        return ResponseEntity.status(201).body(avaliacaoService.criar(avaliacao, usuarioId));
     }
 
     @GetMapping

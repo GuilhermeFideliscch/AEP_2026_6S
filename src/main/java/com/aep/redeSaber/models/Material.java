@@ -16,14 +16,11 @@ public class Material {
     private String titulo;
     private String descricao;
     private String linkArquivo;
-
     private String usuarioId;
-
     private List<Comentario> comentarios;
 
     @Data
     public static class Comentario {
-        private String autor;
         private String texto;
     }
 }

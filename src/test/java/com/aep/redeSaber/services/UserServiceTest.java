@@ -12,8 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -27,80 +26,130 @@ class UserServiceTest {
     private UserService userService;
 
     @Test
-    void deveCriarUsuarioComSucessoEDefinirDataCriacao() {
+    void deveCriarUsuarioComDataDeCriacao() {
         User user = new User();
-        user.setNome("Guilherme");
-        user.setEmail("guilherme@email.com");
+        user.setNome("Usuário");
 
-        when(userRepository.save(any(User.class))).thenReturn(user);
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         User resultado = userService.criar(user);
 
-        assertThat(resultado.getNome()).isEqualTo("Guilherme");
-        assertThat(resultado.getDataCriacao()).isNotNull();
+        assertNotNull(resultado.getDataCriacao());
+        assertEquals("Usuário", resultado.getNome());
         verify(userRepository).save(user);
     }
 
     @Test
-    void deveListarTodosUsuarios() {
-        when(userRepository.findAll()).thenReturn(List.of(new User(), new User()));
+    void deveListarTodosOsUsuarios() {
+        List<User> usuarios = List.of(new User(), new User());
+        when(userRepository.findAll()).thenReturn(usuarios);
 
         List<User> resultado = userService.listar();
 
-        assertThat(resultado).hasSize(2);
-        verify(userRepository).findAll();
+        assertEquals(2, resultado.size());
+        assertSame(usuarios, resultado);
     }
 
     @Test
-    void deveListarUsuarioPorId() {
+    void deveBuscarUsuarioPorId() {
         User user = new User();
-        user.setId("1");
+        user.setId("usuario-1");
+        when(userRepository.findById("usuario-1")).thenReturn(Optional.of(user));
 
-        when(userRepository.findById("1")).thenReturn(Optional.of(user));
+        Optional<User> resultado = userService.listarPorId("usuario-1");
 
-        Optional<User> resultado = userService.listarPorId("1");
-
-        assertThat(resultado).isPresent();
-        assertThat(resultado.get().getId()).isEqualTo("1");
+        assertTrue(resultado.isPresent());
+        assertEquals("usuario-1", resultado.get().getId());
     }
 
     @Test
-    void deveAtualizarUsuarioComSucesso() {
+    void deveRetornarVazioQuandoUsuarioNaoExistir() {
+        when(userRepository.findById("inexistente")).thenReturn(Optional.empty());
+
+        assertTrue(userService.listarPorId("inexistente").isEmpty());
+    }
+
+    @Test
+    void deveAutenticarUsuarioComCredenciaisCorretas() {
+        User user = new User();
+        user.setEmail("usuario@email.com");
+        user.setSenha("123456");
+        when(userRepository.findByEmail("usuario@email.com")).thenReturn(Optional.of(user));
+
+        Optional<User> resultado = userService.autenticar("usuario@email.com", "123456");
+
+        assertTrue(resultado.isPresent());
+        assertSame(user, resultado.get());
+    }
+
+    @Test
+    void deveRecusarSenhaIncorreta() {
+        User user = new User();
+        user.setEmail("usuario@email.com");
+        user.setSenha("123456");
+        when(userRepository.findByEmail("usuario@email.com")).thenReturn(Optional.of(user));
+
+        assertTrue(userService.autenticar("usuario@email.com", "senha-errada").isEmpty());
+    }
+
+    @Test
+    void deveRecusarUsuarioComSenhaNula() {
+        User user = new User();
+        user.setEmail("usuario@email.com");
+        user.setSenha(null);
+        when(userRepository.findByEmail("usuario@email.com")).thenReturn(Optional.of(user));
+
+        assertTrue(userService.autenticar("usuario@email.com", "123456").isEmpty());
+    }
+
+    @Test
+    void deveRecusarEmailInexistente() {
+        when(userRepository.findByEmail("inexistente@email.com")).thenReturn(Optional.empty());
+
+        assertTrue(userService.autenticar("inexistente@email.com", "123456").isEmpty());
+    }
+
+    @Test
+    void deveAtualizarUsuarioExistente() {
         User existente = new User();
-        existente.setId("1");
-        existente.setNome("Nome Antigo");
+        existente.setId("usuario-1");
+        existente.setNome("Nome antigo");
+        existente.setEmail("antigo@email.com");
 
-        User dadosNovos = new User();
-        dadosNovos.setNome("Nome Novo");
-        dadosNovos.setEmail("novo@email.com");
-        dadosNovos.setTelefone("99999999");
-        dadosNovos.setSenha("123456");
+        User dados = new User();
+        dados.setNome("Nome novo");
+        dados.setEmail("novo@email.com");
+        dados.setTelefone("44999999999");
+        dados.setSenha("nova-senha");
 
-        when(userRepository.findById("1")).thenReturn(Optional.of(existente));
-        when(userRepository.save(any(User.class))).thenReturn(existente);
+        when(userRepository.findById("usuario-1")).thenReturn(Optional.of(existente));
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        User resultado = userService.atualizar(dadosNovos, "1");
+        User resultado = userService.atualizar(dados, "usuario-1");
 
-        assertThat(resultado.getNome()).isEqualTo("Nome Novo");
-        verify(userRepository).findById("1");
+        assertEquals("Nome novo", resultado.getNome());
+        assertEquals("novo@email.com", resultado.getEmail());
+        assertEquals("44999999999", resultado.getTelefone());
+        assertEquals("nova-senha", resultado.getSenha());
         verify(userRepository).save(existente);
     }
 
     @Test
     void deveLancarExcecaoAoAtualizarUsuarioInexistente() {
-        when(userRepository.findById("99")).thenReturn(Optional.empty());
+        when(userRepository.findById("inexistente")).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> {
-            userService.atualizar(new User(), "99");
-        });
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> userService.atualizar(new User(), "inexistente")
+        );
+
+        assertEquals("User não encontrado", exception.getMessage());
+        verify(userRepository, never()).save(any(User.class));
     }
 
     @Test
-    void deveDeletarUsuarioComSucesso() {
-        doNothing().when(userRepository).deleteById("1");
-
-        userService.deletar("1");
-
-        verify(userRepository).deleteById("1");
+    void deveDeletarUsuario() {
+        assertDoesNotThrow(() -> userService.deletar("usuario-1"));
+        verify(userRepository).deleteById("usuario-1");
     }
 }

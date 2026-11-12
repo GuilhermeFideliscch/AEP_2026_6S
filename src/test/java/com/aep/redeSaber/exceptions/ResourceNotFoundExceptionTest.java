@@ -2,15 +2,14 @@ package com.aep.redeSaber.exceptions;
 
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ResourceNotFoundExceptionTest {
 
     @Test
-    void deveCriarExcecaoComMensagem() {
-        ResourceNotFoundException ex = new ResourceNotFoundException("User não encontrado");
+    void deveArmazenarMensagemDaExcecao() {
+        ResourceNotFoundException exception = new ResourceNotFoundException("Recurso não encontrado");
 
-        assertThat(ex).isInstanceOf(RuntimeException.class);
-        assertThat(ex.getMessage()).isEqualTo("User não encontrado");
+        assertEquals("Recurso não encontrado", exception.getMessage());
     }
 }

@@ -3,7 +3,6 @@ package com.aep.redeSaber.services;
 import com.aep.redeSaber.exceptions.ResourceNotFoundException;
 import com.aep.redeSaber.models.User;
 import com.aep.redeSaber.repositories.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -19,20 +18,26 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    public User criar(User user){
+    public User criar(User user) {
         user.setDataCriacao(new Date());
         return userRepository.save(user);
     }
 
-    public List<User> listar(){
+    public List<User> listar() {
         return userRepository.findAll();
     }
 
-    public Optional<User> listarPorId(String id){
+    public Optional<User> listarPorId(String id) {
         return userRepository.findById(id);
     }
 
-    public User atualizar(User user, String id){
+    public Optional<User> autenticar(String email, String senha) {
+        return userRepository.findByEmail(email)
+                .filter(user -> user.getSenha() != null
+                        && user.getSenha().equals(senha));
+    }
+
+    public User atualizar(User user, String id) {
         User userExistente = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User não encontrado"));
 
@@ -44,7 +49,7 @@ public class UserService {
         return userRepository.save(userExistente);
     }
 
-    public void deletar(String id){
+    public void deletar(String id) {
         userRepository.deleteById(id);
     }
 }

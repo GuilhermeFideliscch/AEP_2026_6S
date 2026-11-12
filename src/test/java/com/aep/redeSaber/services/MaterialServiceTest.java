@@ -2,7 +2,6 @@ package com.aep.redeSaber.services;
 
 import com.aep.redeSaber.exceptions.ResourceNotFoundException;
 import com.aep.redeSaber.models.Material;
-import com.aep.redeSaber.models.User;
 import com.aep.redeSaber.repositories.MaterialRepository;
 import com.aep.redeSaber.repositories.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -14,8 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -32,118 +30,140 @@ class MaterialServiceTest {
     private MaterialService materialService;
 
     @Test
-    void deveCriarMaterialComSucesso() {
+    void deveCriarMaterialAssociadoAoUsuario() {
         Material material = new Material();
-        material.setTitulo("Apostila NoSQL");
-        material.setUsuarioId("user123");
+        material.setTitulo("Matemática");
+        material.setUsuarioId("usuario-enviado-pelo-cliente");
 
-        User user = new User();
-        user.setId("user123");
+        when(userRepository.existsById("usuario-1")).thenReturn(true);
+        when(materialRepository.save(any(Material.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        when(userRepository.findById("user123")).thenReturn(Optional.of(user));
-        when(materialRepository.save(any(Material.class))).thenReturn(material);
+        Material resultado = materialService.criar(material, "usuario-1");
 
-        Material resultado = materialService.criar(material);
-
-        assertThat(resultado.getTitulo()).isEqualTo("Apostila NoSQL");
-        verify(userRepository).findById("user123");
+        assertEquals("usuario-1", resultado.getUsuarioId());
+        assertEquals("Matemática", resultado.getTitulo());
+        verify(userRepository).existsById("usuario-1");
         verify(materialRepository).save(material);
     }
 
     @Test
-    void deveLancarExcecaoAoCriarMaterialComUsuarioInexistente() {
+    void deveImpedirCriacaoQuandoUsuarioNaoExistir() {
         Material material = new Material();
-        material.setUsuarioId("inexistente");
+        when(userRepository.existsById("usuario-inexistente")).thenReturn(false);
 
-        when(userRepository.findById("inexistente")).thenReturn(Optional.empty());
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> materialService.criar(material, "usuario-inexistente")
+        );
 
-        assertThrows(ResourceNotFoundException.class, () -> {
-            materialService.criar(material);
-        });
-
-        verify(userRepository).findById("inexistente");
+        assertEquals("Usuário não encontrado", exception.getMessage());
         verify(materialRepository, never()).save(any(Material.class));
     }
 
     @Test
-    void deveListarTodosMateriais() {
-        when(materialRepository.findAll()).thenReturn(List.of(new Material(), new Material()));
+    void deveListarTodosOsMateriais() {
+        List<Material> materiais = List.of(new Material(), new Material());
+        when(materialRepository.findAll()).thenReturn(materiais);
 
         List<Material> resultado = materialService.listar();
 
-        assertThat(resultado).hasSize(2);
-        verify(materialRepository).findAll();
+        assertEquals(2, resultado.size());
+        assertSame(materiais, resultado);
     }
 
     @Test
-    void deveListarMaterialPorId() {
+    void deveBuscarMaterialPorId() {
         Material material = new Material();
-        material.setId("mat123");
+        material.setId("material-1");
+        when(materialRepository.findById("material-1")).thenReturn(Optional.of(material));
 
-        when(materialRepository.findById("mat123")).thenReturn(Optional.of(material));
+        Optional<Material> resultado = materialService.listarPorId("material-1");
 
-        Optional<Material> resultado = materialService.listarPorId("mat123");
-
-        assertThat(resultado).isPresent();
-        assertThat(resultado.get().getId()).isEqualTo("mat123");
+        assertTrue(resultado.isPresent());
+        assertEquals("material-1", resultado.get().getId());
     }
 
     @Test
-    void deveListarMateriaisPorUsuario() {
-        when(materialRepository.findByUsuarioId("user123")).thenReturn(List.of(new Material()));
+    void deveRetornarVazioQuandoMaterialNaoExistir() {
+        when(materialRepository.findById("inexistente")).thenReturn(Optional.empty());
 
-        List<Material> resultado = materialService.listarPorUsuario("user123");
+        Optional<Material> resultado = materialService.listarPorId("inexistente");
 
-        assertThat(resultado).hasSize(1);
-        verify(materialRepository).findByUsuarioId("user123");
+        assertTrue(resultado.isEmpty());
     }
 
     @Test
-    void deveAtualizarMaterialComSucesso() {
+    void deveListarMateriaisDoUsuario() {
+        List<Material> materiais = List.of(new Material());
+        when(materialRepository.findByUsuarioId("usuario-1")).thenReturn(materiais);
+
+        List<Material> resultado = materialService.listarPorUsuario("usuario-1");
+
+        assertEquals(1, resultado.size());
+        verify(materialRepository).findByUsuarioId("usuario-1");
+    }
+
+    @Test
+    void deveAtualizarDadosSemAlterarUsuarioResponsavel() {
         Material existente = new Material();
-        existente.setId("mat123");
-        existente.setTitulo("Antigo");
+        existente.setId("material-1");
+        existente.setUsuarioId("usuario-original");
+        existente.setTitulo("Título antigo");
 
-        Material dadosNovos = new Material();
-        dadosNovos.setTitulo("Novo Título");
-        dadosNovos.setDescricao("Nova Descrição");
+        Material dados = new Material();
+        dados.setTitulo("Título novo");
+        dados.setDescricao("Descrição nova");
+        dados.setLinkArquivo("https://exemplo.com/arquivo");
 
-        when(materialRepository.findById("mat123")).thenReturn(Optional.of(existente));
-        when(materialRepository.save(any(Material.class))).thenReturn(existente);
+        Material.Comentario comentario = new Material.Comentario();
+        comentario.setTexto("Comentário atualizado");
+        dados.setComentarios(List.of(comentario));
 
-        Material resultado = materialService.atualizar(dadosNovos, "mat123");
+        when(materialRepository.findById("material-1")).thenReturn(Optional.of(existente));
+        when(materialRepository.save(any(Material.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        assertThat(resultado.getTitulo()).isEqualTo("Novo Título");
-        verify(materialRepository).findById("mat123");
+        Material resultado = materialService.atualizar(dados, "material-1");
+
+        assertEquals("Título novo", resultado.getTitulo());
+        assertEquals("Descrição nova", resultado.getDescricao());
+        assertEquals("https://exemplo.com/arquivo", resultado.getLinkArquivo());
+        assertEquals("usuario-original", resultado.getUsuarioId());
+        assertEquals("Comentário atualizado", resultado.getComentarios().get(0).getTexto());
         verify(materialRepository).save(existente);
     }
 
     @Test
     void deveLancarExcecaoAoAtualizarMaterialInexistente() {
-        when(materialRepository.findById("999")).thenReturn(Optional.empty());
+        when(materialRepository.findById("inexistente")).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> {
-            materialService.atualizar(new Material(), "999");
-        });
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> materialService.atualizar(new Material(), "inexistente")
+        );
+
+        assertEquals("Material não encontrado", exception.getMessage());
+        verify(materialRepository, never()).save(any(Material.class));
     }
 
     @Test
-    void deveDeletarMaterialComSucesso() {
-        when(materialRepository.existsById("mat123")).thenReturn(true);
-        doNothing().when(materialRepository).deleteById("mat123");
+    void deveDeletarMaterialExistente() {
+        when(materialRepository.existsById("material-1")).thenReturn(true);
 
-        materialService.deletar("mat123");
+        assertDoesNotThrow(() -> materialService.deletar("material-1"));
 
-        verify(materialRepository).existsById("mat123");
-        verify(materialRepository).deleteById("mat123");
+        verify(materialRepository).deleteById("material-1");
     }
 
     @Test
     void deveLancarExcecaoAoDeletarMaterialInexistente() {
-        when(materialRepository.existsById("999")).thenReturn(false);
+        when(materialRepository.existsById("inexistente")).thenReturn(false);
 
-        assertThrows(ResourceNotFoundException.class, () -> {
-            materialService.deletar("999");
-        });
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> materialService.deletar("inexistente")
+        );
+
+        assertEquals("Material não encontrado", exception.getMessage());
+        verify(materialRepository, never()).deleteById(anyString());
     }
 }

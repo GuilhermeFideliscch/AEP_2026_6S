@@ -20,10 +20,13 @@ public class MaterialService {
         this.userRepository = userRepository;
     }
 
-    public Material criar(Material material) {
-        if (material.getUsuarioId() != null && userRepository.findById(material.getUsuarioId()).isEmpty()) {
-            throw new ResourceNotFoundException("Usuário responsável não encontrado");
+    public Material criar(Material material, String usuarioId) {
+        if (!userRepository.existsById(usuarioId)) {
+            throw new ResourceNotFoundException("Usuário não encontrado");
         }
+
+        material.setUsuarioId(usuarioId);
+
         return materialRepository.save(material);
     }
 
@@ -55,6 +58,7 @@ public class MaterialService {
         if (!materialRepository.existsById(id)) {
             throw new ResourceNotFoundException("Material não encontrado");
         }
+
         materialRepository.deleteById(id);
     }
 }
