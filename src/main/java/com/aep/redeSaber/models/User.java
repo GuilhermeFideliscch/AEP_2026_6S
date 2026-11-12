@@ -5,6 +5,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;
+import java.util.List;
 
 @Data
 @Document(collection = "users")
@@ -20,4 +21,12 @@ public class User {
     private boolean ativo;
     private Date dataCriacao;
 
+    private List<Endereco> enderecos;
+
+    @Data
+    public static class Endereco {
+        private String rua;
+        private String cidade;
+        private String estado;
+    }
 }

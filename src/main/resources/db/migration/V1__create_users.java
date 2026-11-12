@@ -1,6 +1,6 @@
 db = db.getSiblingDB("User");
- 
-const validator = {
+
+const validatorUser = {
 $jsonSchema: {
 bsonType: "object",
 required: [
@@ -12,26 +12,24 @@ required: [
         "dataCriacao"
         ],
 properties: {
-_id: {
-bsonType: "string"
-        },
-nome: {
-bsonType: "string"
-        },
-email: {
-bsonType: "string"
-        },
-senha: {
-bsonType: "string"
-        },
-telefone: {
-bsonType: "string"
-        },
-ativo: {
-bsonType: "bool"
-        },
-dataCriacao: {
-bsonType: "date"
+_id: { bsonType: "string" },
+nome: { bsonType: "string" },
+email: { bsonType: "string" },
+senha: { bsonType: "string" },
+telefone: { bsonType: "string" },
+ativo: { bsonType: "bool" },
+dataCriacao: { bsonType: "date" },
+enderecos: {
+bsonType: "array",
+items: {
+bsonType: "object",
+required: ["rua", "cidade", "estado"],
+properties: {
+rua: { bsonType: "string" },
+cidade: { bsonType: "string" },
+estado: { bsonType: "string" }
+        }
+        }
         }
         }
         }
@@ -39,14 +37,14 @@ bsonType: "date"
 
         if (!db.getCollectionNames().includes("users")) {
         db.createCollection("users", {
-    validator: validator,
+    validator: validatorUser,
             validationLevel: "strict",
             validationAction: "error"
 });
         } else {
         db.runCommand({
     collMod: "users",
-            validator: validator,
+            validator: validatorUser,
             validationLevel: "strict",
             validationAction: "error"
 });

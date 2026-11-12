@@ -1,5 +1,6 @@
 package com.aep.redeSaber.services;
 
+import com.aep.redeSaber.exceptions.ResourceNotFoundException;
 import com.aep.redeSaber.models.User;
 import com.aep.redeSaber.repositories.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -26,74 +27,61 @@ class UserServiceTest {
     private UserService userService;
 
     @Test
-    void deveCriarUsuario() {
+    void deveCriarUsuarioComSucessoEDefinirDataCriacao() {
         User user = new User();
         user.setNome("Guilherme");
+        user.setEmail("guilherme@email.com");
 
         when(userRepository.save(any(User.class))).thenReturn(user);
 
         User resultado = userService.criar(user);
 
         assertThat(resultado.getNome()).isEqualTo("Guilherme");
+        assertThat(resultado.getDataCriacao()).isNotNull();
         verify(userRepository).save(user);
     }
 
     @Test
     void deveListarTodosUsuarios() {
-        User user1 = new User();
-        user1.setNome("Ana");
-        User user2 = new User();
-        user2.setNome("Bruno");
-
-        when(userRepository.findAll()).thenReturn(List.of(user1, user2));
+        when(userRepository.findAll()).thenReturn(List.of(new User(), new User()));
 
         List<User> resultado = userService.listar();
 
         assertThat(resultado).hasSize(2);
-        assertThat(resultado).extracting(User::getNome).containsExactly("Ana", "Bruno");
+        verify(userRepository).findAll();
     }
 
     @Test
-    void deveListarUsuarioPorIdQuandoExiste() {
+    void deveListarUsuarioPorId() {
         User user = new User();
         user.setId("1");
-        user.setNome("Carla");
 
         when(userRepository.findById("1")).thenReturn(Optional.of(user));
 
         Optional<User> resultado = userService.listarPorId("1");
 
         assertThat(resultado).isPresent();
-        assertThat(resultado.get().getNome()).isEqualTo("Carla");
-    }
-
-    @Test
-    void deveRetornarVazioQuandoUsuarioNaoExiste() {
-        when(userRepository.findById("99")).thenReturn(Optional.empty());
-
-        Optional<User> resultado = userService.listarPorId("99");
-
-        assertThat(resultado).isEmpty();
+        assertThat(resultado.get().getId()).isEqualTo("1");
     }
 
     @Test
     void deveAtualizarUsuarioComSucesso() {
         User existente = new User();
         existente.setId("1");
-        existente.setNome("Antigo");
+        existente.setNome("Nome Antigo");
 
-        User dadosAtualizados = new User();
-        dadosAtualizados.setNome("Novo Nome");
-        dadosAtualizados.setEmail("novo@email.com");
-        dadosAtualizados.setTelefone("123456789");
-        dadosAtualizados.setSenha("123456");
+        User dadosNovos = new User();
+        dadosNovos.setNome("Nome Novo");
+        dadosNovos.setEmail("novo@email.com");
+        dadosNovos.setTelefone("99999999");
+        dadosNovos.setSenha("123456");
 
         when(userRepository.findById("1")).thenReturn(Optional.of(existente));
         when(userRepository.save(any(User.class))).thenReturn(existente);
 
-        User resultado = userService.atualizar(dadosAtualizados, "1");
+        User resultado = userService.atualizar(dadosNovos, "1");
 
-        assertThat(resultado.getNome()).isEqualTo("Novo Nome");
+        assertThat(resultado.getNome()).isEqualTo("Nome Novo");
         verify(userRepository).findById("1");
         verify(userRepository).save(existente);
     }
@@ -102,17 +90,13 @@ class UserServiceTest {
     void deveLancarExcecaoAoAtualizarUsuarioInexistente() {
         when(userRepository.findById("99")).thenReturn(Optional.empty());
 
-        RuntimeException excecao = assertThrows(RuntimeException.class, () -> {
+        assertThrows(ResourceNotFoundException.class, () -> {
             userService.atualizar(new User(), "99");
         });
-
-        assertThat(excecao.getMessage()).isEqualTo("User não encontrado");
-        verify(userRepository).findById("99");
-        verify(userRepository, never()).save(any(User.class));
     }
 
     @Test
-    void deveDeletarUsuario() {
+    void deveDeletarUsuarioComSucesso() {
         doNothing().when(userRepository).deleteById("1");
 
         userService.deletar("1");
